@@ -27,7 +27,7 @@ from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
 
-admins = ["raydel0307"]
+admins = ["Pro_Slayerr"]
 Temp_dates = {}
 DB_global = {}
 Config_temp = {}
