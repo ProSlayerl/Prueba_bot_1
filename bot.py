@@ -26,6 +26,7 @@ from verify_user import VerifyUserData
 from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
+import re
 
 admins = ["Pro_Slayerr"]
 Temp_dates = {}
@@ -632,8 +633,8 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
             data = json.loads(data[2])
             msg = "📝 Datos:\n\n"
             msg+= f"📌 Plan: {data['plan']}\n"
-            msg+= f"📌 Limite: {data['limite']} GiB\n"
-            msg+= f"📌 Subido: {data['total']} GiB"
+            msg+= f"📌 Limite: {sizeof_fmt(data['limite'])}\n"
+            msg+= f"📌 Subido: {sizeof_fmt(data['total'])}"
             await bot.send_message(username,msg)
         except Exception as e:
             await bot.send_message(username,f"🔥Elige tu Plan🔥\n\n➡️ Plan Básico:\n💎15 GB de transferencia diaria\n📱 110 CUP\n\n➡️ Plan Estándar:\n💎25 GB de transferencia diaria\n📱 170 CUP\n\n➡️ Plan Avanzado:\n💎50 GB de transferencia diaria\n📱 250 CUP\n\n➡️Plan Premium:\n💎100 GB de transferencia diaria\n📱 280 CUP\n\n➡️Plan UCLV:\n💎20 GB  de trasferencia diaria\n📲250 CUP")
@@ -850,7 +851,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     await msg.edit('**Ha ocurrido un error**')
                 shutil.rmtree(f'downloads/{username}')
                 return
-
+seg = 0
 def uploadfile_progres(chunk,filesize,start,filename,message):
     try:
         now = time()
@@ -866,7 +867,7 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
             message.edit(msg)
         seg = localtime().tm_sec
     except Exception as e:
-        print(str(e))
+        print("UPLOADER "+str(e))
 
 async def medisur_api(file,usid,msg,username):
 	try:
@@ -993,6 +994,36 @@ async def medisur_api(file,usid,msg,username):
 					await bot.send_document(usid,txtname,thumb="thumb.jpg")
 	except Exception as e:
 		print(str(e))
+
+def uploadfile_progres_medisur(chunk,filesize,start,filename,message,ttotal,ttotal_t,tfilename):
+    try:
+        now = time()
+        diff = now - start
+        mbs = chunk / diff
+        msg = f"💭 ɴᴀᴍᴇ: {tfilename}\n\n"
+        chunk = ttotal+chunk
+        try:
+            msg+=update_progress_bar(chunk,ttotal_t)+ "  " + sizeof_fmt(mbs)+"/s\n\n"
+        except:pass
+        msg+= f"⚡️ ᴜᴘʟᴏᴀᴅɪɴɢ: {sizeof_fmt(chunk)} of {sizeof_fmt(ttotal_t)}\n\n"
+        global seg
+        if seg != localtime().tm_sec:
+            message.edit(msg)
+        seg = localtime().tm_sec
+    except Exception as e:
+        print("error: ",str(e))
+
+def update_progress_bar(inte,max):
+    percentage = inte / max
+    percentage *= 100
+    percentage = round(percentage)
+    hashes = int(percentage / 5)
+    spaces = 20 - hashes
+    progress_bar = "[ " + "•" * hashes + "•" * spaces + " ]"
+    percentage_pos = int(hashes / 1)
+    percentage_string = str(percentage) + "%"
+    progress_bar = progress_bar[:percentage_pos] + percentage_string + progress_bar[percentage_pos + len(percentage_string):]
+    return(progress_bar)
 
 async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
     try:
