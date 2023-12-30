@@ -1273,7 +1273,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                     message+=f"{link}\n"
             with open(filename+".txt","w") as txt:
                 txt.write(message)
-            await bot.send_document(usid,filename+".txt",thumb="thumb.png",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
+            await bot.send_document(usid,filename+".txt",thumb="thumb.jpg"",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
             os.unlink(filename+".txt")
     except Exception as ex:
         await save_logs("WebM "+str(ex))
