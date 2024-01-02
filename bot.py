@@ -1273,7 +1273,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                     message+=f"{link}\n"
             with open(filename+".txt","w") as txt:
                 txt.write(message)
-            await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
+            await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#descargasfree #superinlinesearch\n")
             os.unlink(filename+".txt")
     except Exception as ex:
         await save_logs("WebM "+str(ex))
@@ -1673,7 +1673,8 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁UCLV☁","UCLVC")],
+        [InlineKeyboardButton("☁UCLVC☁","UCLVC")],
+        [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
         [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
