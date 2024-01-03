@@ -1189,79 +1189,79 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                 files = [file]
             linksz = []
             timeout = aiohttp.ClientTimeout(total=600)
-            for file in files:
-                try:
-                    current = Path(file).stat().st_size
-                    fname = file.split("/")[-1]
-                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
-                    async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
-                        html = await resp.text()
-                        await save_logs(resp.status)
-                        ttotal+=current
-                        partes+=1
-                    await msg.edit("🛠 **Construyendo Enlace*")
-                    id = str(html).split("'null','")[1].split("'")[0]
-                    await save_logs(id)
-                    payload = {
-                        "Body": {
-                            "BatchRequest": {
-                                "_jsns": "urn:zimbra",
-                                "onerror": "continue",
-                                "SaveDocumentRequest": {
-                                    "_jsns": "urn:zimbraMail",
-                                    "doc": {
-                                        "l": "16",
-                                        "upload": {
-                                            "id": id
-                                        }
-                                    },
-                                    "requestId": 0
-                                }
+            index = 0
+            while index < len(files):
+            	file = files[index]
+                current = Path(file).stat().st_size
+                fname = file.split("/")[-1]
+                fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
+                async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
+                    html = await resp.text()
+                    await save_logs(resp.status)
+                    ttotal+=current
+                    partes+=1
+                await msg.edit("🛠 **Construyendo Enlace*")
+                id = str(html).split("'null','")[1].split("'")[0]
+                await save_logs(id)
+                payload = {
+                    "Body": {
+                        "BatchRequest": {
+                            "_jsns": "urn:zimbra",
+                            "onerror": "continue",
+                            "SaveDocumentRequest": {
+                                "_jsns": "urn:zimbraMail",
+                                "doc": {
+                                    "l": "16",
+                                    "upload": {
+                                        "id": id
+                                    }
+                                },
+                                "requestId": 0
                             }
-                        },
-                        "Header": {
-                            "context": {
-                                "_jsns": "urn:zimbra",
-                                "account": {
-                                    "_content": user,
-                                    "by": "name"
-                                },
-                                "csrfToken": XZimbraCsrfToken,
-                                "notify": {
-                                    "seq": 1
-                                },
-                                "session": {
-                                    "_content": 1277,
-                                    "id": 1277
-                                },
-                                "userAgent": {
-                                    "name": "ZimbraWebClient - FF115 (Win)",
-                                    "version": "8.8.15_GA_4508"
-                                }
+                        }
+                    },
+                    "Header": {
+                        "context": {
+                            "_jsns": "urn:zimbra",
+                            "account": {
+                                "_content": user,
+                                "by": "name"
+                            },
+                            "csrfToken": XZimbraCsrfToken,
+                            "notify": {
+                                "seq": 1
+                            },
+                            "session": {
+                                "_content": 1277,
+                                "id": 1277
+                            },
+                            "userAgent": {
+                                "name": "ZimbraWebClient - FF115 (Win)",
+                                "version": "8.8.15_GA_4508"
                             }
                         }
                     }
-                    async with session.post(host+"service/soap/BatchRequest",json=payload,headers={"Content-Type":"application/soap+xml; charset=utf-8",**headers},timeout=timeout) as resp:
-                        await save_logs(resp.status)
-                        html = await resp.text()
-                        if resp.status==200:
-                            try:
-                                data = json.loads(html)
-                                name = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["name"]
-                                await save_logs(name)
-                                DID = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["id"]
-                                await save_logs(DID)
-                                url = f"{host}home/{user}/Briefcase/{name}?disp=a"
-                                await save_logs(url)
-                                linksz.append(url)
-                            except Exception as ex:
-                                if 'SaveDocumentResponse' in str(ex):
-                                    await msg.edit(f"💢 __EL ARCHIVO {fname} YA ESTÁ SUBIDO A LA NUBE__ 💢")
-                                    return
-                                else:
-                                    await save_logs("UP0 "+str(ex))
-                except Exception as e:
-                    await save_logs("UP "+str(e))
+                }
+                async with session.post(host+"service/soap/BatchRequest",json=payload,headers={"Content-Type":"application/soap+xml; charset=utf-8",**headers},timeout=timeout) as resp:
+                    await save_logs(resp.status)
+                    html = await resp.text()
+                    if resp.status==200:
+                        try:
+                            data = json.loads(html)
+                            name = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["name"]
+                            await save_logs(name)
+                            DID = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["id"]
+                            await save_logs(DID)
+                            url = f"{host}home/{user}/Briefcase/{name}?disp=a"
+                            await save_logs(url)
+                            linksz.append(url)
+                            index += 1
+                        except Exception as ex:
+                            if 'SaveDocumentResponse' in str(ex):
+                                await msg.edit(f"💢 __EL ARCHIVO {fname} YA ESTÁ SUBIDO A LA NUBE__ 💢")
+                                return
+                            else:
+                                await save_logs("UP0 "+str(ex))
             await msg.delete()
             m = f"🎖 **FINALIZADO** 🎖 \n\n 🎬 `{filename}`\n📦 **Tamaño:** {sizeof_fmt(ttotal_t)}\n"
             await bot.send_message(username,m)
