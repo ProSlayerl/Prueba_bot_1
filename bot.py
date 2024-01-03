@@ -26,7 +26,6 @@ from verify_user import VerifyUserData
 from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
-import re
 
 admins = ["Pro_Slayerr"]
 Temp_dates = {}
@@ -68,19 +67,6 @@ async def save_logs(text):
     texto = message.text+"\n"+str(text)
     await message.edit(texto[-600:])
     return
-
-async def file_renamer(file):
-    filename = file.split("/")[-1]
-    path = file.split(filename)[0]
-    if len(filename)>21:
-        p = filename[:10]
-        f = filename[-11:]
-        filex = p + f
-    else:
-         filex = filename
-    filename = path + re.sub(r'[^A-Za-z0-9.]', '', filex)
-    os.rename(file,filename)
-    return filename
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -214,8 +200,8 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
             data = json.loads(data[2])
             msg = "📝 Datos:\n\n"
             msg+= f"📌 Plan: {data['plan']}"
-            msg+= f"📌 Limite: {sizeof_fmt(data['limite'])}n"
-            msg+= f"📌 Subido: {sizeof_fmt(data['total'])} GiB"
+            msg+= f"📌 Limite: {data['limite']} GiB\n"
+            msg+= f"📌 Subido: {data['total']} GiB"
             await bot.send_message(username,msg)
             return
 
@@ -633,8 +619,8 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
             data = json.loads(data[2])
             msg = "📝 Datos:\n\n"
             msg+= f"📌 Plan: {data['plan']}\n"
-            msg+= f"📌 Limite: {sizeof_fmt(data['limite'])}\n"
-            msg+= f"📌 Subido: {sizeof_fmt(data['total'])}"
+            msg+= f"📌 Limite: {data['limite']} GiB\n"
+            msg+= f"📌 Subido: {data['total']} GiB"
             await bot.send_message(username,msg)
         except Exception as e:
             await bot.send_message(username,f"🔥Elige tu Plan🔥\n\n➡️ Plan Básico:\n💎15 GB de transferencia diaria\n📱 110 CUP\n\n➡️ Plan Estándar:\n💎25 GB de transferencia diaria\n📱 170 CUP\n\n➡️ Plan Avanzado:\n💎50 GB de transferencia diaria\n📱 250 CUP\n\n➡️Plan Premium:\n💎100 GB de transferencia diaria\n📱 280 CUP\n\n➡️Plan UCLV:\n💎20 GB  de trasferencia diaria\n📲250 CUP")
@@ -688,7 +674,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES']
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
     login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
@@ -722,7 +708,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     await tesisld_api(Temp_dates[username]['file'],user_id,msg,username)
                     return
                 if input_mensaje == "UCLVC":
-                    if d["plan"]!="uclv":
+                    if d["plan"]!="uclvc":
                         await msg.edit("💢 No puede usar este Servidor 💢\n\n🗣 Disponible con el plan Nube UCLV")
                         return
                     else:
@@ -851,7 +837,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     await msg.edit('**Ha ocurrido un error**')
                 shutil.rmtree(f'downloads/{username}')
                 return
-seg = 0
+
 def uploadfile_progres(chunk,filesize,start,filename,message):
     try:
         now = time()
@@ -867,7 +853,7 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
             message.edit(msg)
         seg = localtime().tm_sec
     except Exception as e:
-        print("UPLOADER "+str(e))
+        print(str(e))
 
 async def medisur_api(file,usid,msg,username):
 	try:
@@ -994,36 +980,6 @@ async def medisur_api(file,usid,msg,username):
 					await bot.send_document(usid,txtname,thumb="thumb.jpg")
 	except Exception as e:
 		print(str(e))
-
-def uploadfile_progres_medisur(chunk,filesize,start,filename,message,ttotal,ttotal_t,tfilename):
-    try:
-        now = time()
-        diff = now - start
-        mbs = chunk / diff
-        msg = f"💭 ɴᴀᴍᴇ: {tfilename}\n\n"
-        chunk = ttotal+chunk
-        try:
-            msg+=update_progress_bar(chunk,ttotal_t)+ "  " + sizeof_fmt(mbs)+"/s\n\n"
-        except:pass
-        msg+= f"⚡️ ᴜᴘʟᴏᴀᴅɪɴɢ: {sizeof_fmt(chunk)} of {sizeof_fmt(ttotal_t)}\n\n"
-        global seg
-        if seg != localtime().tm_sec:
-            message.edit(msg)
-        seg = localtime().tm_sec
-    except Exception as e:
-        print("error: ",str(e))
-
-def update_progress_bar(inte,max):
-    percentage = inte / max
-    percentage *= 100
-    percentage = round(percentage)
-    hashes = int(percentage / 5)
-    spaces = 20 - hashes
-    progress_bar = "[ " + "•" * hashes + "•" * spaces + " ]"
-    percentage_pos = int(hashes / 1)
-    percentage_string = str(percentage) + "%"
-    progress_bar = progress_bar[:percentage_pos] + percentage_string + progress_bar[percentage_pos + len(percentage_string):]
-    return(progress_bar)
 
 async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
     try:
@@ -1189,79 +1145,79 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                 files = [file]
             linksz = []
             timeout = aiohttp.ClientTimeout(total=600)
-            index = 0
-            while index < len(files):
-            	file = files[index]
-                current = Path(file).stat().st_size
-                fname = file.split("/")[-1]
-                fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
-                async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
-                    html = await resp.text()
-                    await save_logs(resp.status)
-                    ttotal+=current
-                    partes+=1
-                await msg.edit("🛠 **Construyendo Enlace*")
-                id = str(html).split("'null','")[1].split("'")[0]
-                await save_logs(id)
-                payload = {
-                    "Body": {
-                        "BatchRequest": {
-                            "_jsns": "urn:zimbra",
-                            "onerror": "continue",
-                            "SaveDocumentRequest": {
-                                "_jsns": "urn:zimbraMail",
-                                "doc": {
-                                    "l": "16",
-                                    "upload": {
-                                        "id": id
-                                    }
-                                },
-                                "requestId": 0
+            for file in files:
+                try:
+                    current = Path(file).stat().st_size
+                    fname = file.split("/")[-1]
+                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
+                    async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
+                        html = await resp.text()
+                        await save_logs(resp.status)
+                        ttotal+=current
+                        partes+=1
+                    await msg.edit("🛠 **Construyendo Enlace*")
+                    id = str(html).split("'null','")[1].split("'")[0]
+                    await save_logs(id)
+                    payload = {
+                        "Body": {
+                            "BatchRequest": {
+                                "_jsns": "urn:zimbra",
+                                "onerror": "continue",
+                                "SaveDocumentRequest": {
+                                    "_jsns": "urn:zimbraMail",
+                                    "doc": {
+                                        "l": "16",
+                                        "upload": {
+                                            "id": id
+                                        }
+                                    },
+                                    "requestId": 0
+                                }
                             }
-                        }
-                    },
-                    "Header": {
-                        "context": {
-                            "_jsns": "urn:zimbra",
-                            "account": {
-                                "_content": user,
-                                "by": "name"
-                            },
-                            "csrfToken": XZimbraCsrfToken,
-                            "notify": {
-                                "seq": 1
-                            },
-                            "session": {
-                                "_content": 1277,
-                                "id": 1277
-                            },
-                            "userAgent": {
-                                "name": "ZimbraWebClient - FF115 (Win)",
-                                "version": "8.8.15_GA_4508"
+                        },
+                        "Header": {
+                            "context": {
+                                "_jsns": "urn:zimbra",
+                                "account": {
+                                    "_content": user,
+                                    "by": "name"
+                                },
+                                "csrfToken": XZimbraCsrfToken,
+                                "notify": {
+                                    "seq": 1
+                                },
+                                "session": {
+                                    "_content": 1277,
+                                    "id": 1277
+                                },
+                                "userAgent": {
+                                    "name": "ZimbraWebClient - FF115 (Win)",
+                                    "version": "8.8.15_GA_4508"
+                                }
                             }
                         }
                     }
-                }
-                async with session.post(host+"service/soap/BatchRequest",json=payload,headers={"Content-Type":"application/soap+xml; charset=utf-8",**headers},timeout=timeout) as resp:
-                    await save_logs(resp.status)
-                    html = await resp.text()
-                    if resp.status==200:
-                        try:
-                            data = json.loads(html)
-                            name = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["name"]
-                            await save_logs(name)
-                            DID = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["id"]
-                            await save_logs(DID)
-                            url = f"{host}home/{user}/Briefcase/{name}?disp=a"
-                            await save_logs(url)
-                            linksz.append(url)
-                            index += 1
-                        except Exception as ex:
-                            if 'SaveDocumentResponse' in str(ex):
-                                await msg.edit(f"💢 __EL ARCHIVO {fname} YA ESTÁ SUBIDO A LA NUBE__ 💢")
-                                return
-                            else:
-                                await save_logs("UP0 "+str(ex))
+                    async with session.post(host+"service/soap/BatchRequest",json=payload,headers={"Content-Type":"application/soap+xml; charset=utf-8",**headers},timeout=timeout) as resp:
+                        await save_logs(resp.status)
+                        html = await resp.text()
+                        if resp.status==200:
+                            try:
+                                data = json.loads(html)
+                                name = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["name"]
+                                await save_logs(name)
+                                DID = data["Body"]["BatchResponse"]["SaveDocumentResponse"][0]["doc"][0]["id"]
+                                await save_logs(DID)
+                                url = f"{host}home/{user}/Briefcase/{name}?disp=a"
+                                await save_logs(url)
+                                linksz.append(url)
+                            except Exception as ex:
+                                if 'SaveDocumentResponse' in str(ex):
+                                    await msg.edit(f"💢 __EL ARCHIVO {fname} YA ESTÁ SUBIDO A LA NUBE__ 💢")
+                                    return
+                                else:
+                                    await save_logs("UP0 "+str(ex))
+                except Exception as e:
+                    await save_logs("UP "+str(e))
             await msg.delete()
             m = f"🎖 **FINALIZADO** 🎖 \n\n 🎬 `{filename}`\n📦 **Tamaño:** {sizeof_fmt(ttotal_t)}\n"
             await bot.send_message(username,m)
@@ -1273,7 +1229,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                     message+=f"{link}\n"
             with open(filename+".txt","w") as txt:
                 txt.write(message)
-            await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#descargasfree #superinlinesearch\n")
+            await bot.send_document(usid,filename+".txt",thumb="thumb.png",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
             os.unlink(filename+".txt")
     except Exception as ex:
         await save_logs("WebM "+str(ex))
@@ -1673,8 +1629,7 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁UCLVC☁","UCLVC")],
-        [InlineKeyboardButton("☁UCLV☁","UCLV")],
+        [InlineKeyboardButton("☁UCLV☁","UCLVC")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
         [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
