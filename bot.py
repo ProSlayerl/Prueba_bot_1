@@ -1676,7 +1676,7 @@ async def uploads_options(filename, filesize, username):
         [InlineKeyboardButton("☁UCLVC☁","UCLVC")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
-        [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
+        [InlineKeyboardButton("☁VCL☁","VCL")],
         [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
