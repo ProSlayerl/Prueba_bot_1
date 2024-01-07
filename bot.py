@@ -15,6 +15,7 @@ import bs4
 from io import BufferedReader
 import mimetypes
 import requests
+import random
 import json
 from tools.funciones import filezip,descomprimir,limite_msg,files_formatter,mediafiredownload, download_progres , downloadmessage_progres , ytdlp_downloader, sevenzip, uploadfile_progres
 from clients.token import MoodleClient
@@ -689,7 +690,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC','DSPACE']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC','DSPACE','UO']
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
     login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
@@ -728,6 +729,13 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                         return
                     else:
                         await webmailuclv_api(Temp_dates[username]['file'],user_id,msg,username)
+                        return
+                if input_mensaje == "UO":
+                    if d["plan"]!="uo":
+                        await msg.edit("💢 No puede usar este Servidor 💢\n\n🗣 Disponible con el plan Nube UO")
+                        return
+                    else:
+                        await webdav(Temp_dates[username]['file'],user_id,msg,username)
                         return
                 if input_mensaje == "DSPACE":
                     await dspace_api(Temp_dates[username]['file'],user_id,msg,username)
@@ -1028,6 +1036,90 @@ def update_progress_bar(inte,max):
     percentage_string = str(percentage) + "%"
     progress_bar = progress_bar[:percentage_pos] + percentage_string + progress_bar[percentage_pos + len(percentage_string):]
     return(progress_bar)
+
+def generate():
+    prefix = "web-file-upload-"
+    random_string = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(32))
+    unique_id = str(uuid.uuid4().time_low)
+
+    random_name = f"{prefix}{random_string}-{unique_id}"
+    return random_name
+
+async def webdav(file,usid,msg,username):
+    try:
+        print("webdav")
+        proxy = DB_global['Proxy_Global']
+        #global_id = DB_global["Global_id"]
+        user = "denis.ramitrez"
+        password = "Dairon2005**"
+        host = "https://nube.uo.edu.cu/"
+        if proxy:
+            proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
+        else:
+            proxy = aiohttp.TCPConnector()
+        file = await file_renamer(file)
+        filename = file.split("/")[-1]
+        filesize = Path(file).stat().st_size
+        headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
+        async with aiohttp.ClientSession(connector=proxy) as session:
+            print(1)
+            ids = "70261DD3-0DEA-439E-A42D-6CBE26172DA4"
+            await msg.edit(f"Conectando 🔴")
+            #login
+            async with session.get(host+"index.php/login",headers=headers) as resp:
+                html = await resp.text()
+            soup = BeautifulSoup(html,'html.parser')
+            requesttoken = soup.find('head')['data-requesttoken']
+            print(requesttoken)
+            timezone = 'America/Mexico_City'
+            timezone_offset = '-5'
+            payload = {'user':user,'password':password,'timezone':timezone,'timezone_offset':timezone_offset,'requesttoken':requesttoken}
+            async with session.post(host+"index.php/login",data=payload,headers=headers) as resp:
+                print(f"login {resp.status}")
+            async with session.get(host+"index.php/apps/files/") as resp:
+                html = await resp.text()
+            soup = BeautifulSoup(html,'html.parser')
+            requesttoken = soup.find('head')['data-requesttoken']
+            print(requesttoken)
+            await msg.edit(f"Conectado 🟢")
+            #login
+            try:
+                webdav_url = host+"remote.php/dav/uploads/"+ids+"/"+ generate()
+                print(webdav_url)
+                try:
+                    async with session.request("MKCOL", webdav_url,headers={"requesttoken":requesttoken,**headers}) as resp:
+                        print("MKCOL "+str(resp.status))
+                except:
+                    await msg.edit("Este servidor está temporalmente fuera de servicio [await_please]")
+                    return
+                print("up_webdav")
+                mime_type, _ = mimetypes.guess_type(file)
+                if not mime_type:
+                    mime_type = "application/x-7z-compressed"
+                complete = True
+                await msg.edit(f"⬆️ Uploading 0 de {sizeof_fmt(filesize)}")
+                with open(file, 'rb') as f:
+                    offset = 0
+                    vchunk = 10
+                    while True:
+                        file_chunk = f.read(vchunk*1024*1024)
+                        if not file_chunk:
+                            break
+                        async with session.put(f"{webdav_url}/{offset}",data=file_chunk,headers={'Content-Type': mime_type,"requesttoken":requesttoken}) as resp:
+                            try:
+                                await msg.edit(f"⬆️ Uploading {sizeof_fmt(offset)} de {sizeof_fmt(filesize)}")
+                            except:pass
+                        offset+= len(file_chunk)
+                    print("Finalizado")
+                    await msg.edit("✅ **Finalizado** ✅")
+                    u = webdav_url+"/.file"
+                    #u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
+                    await bot.send_message(username,f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
+                    complete = False
+            except Exception as ex:
+                await save_logs(ex)
+    except Exception as ex:
+        await save_logs(str(ex))
 
 async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
     try:
@@ -1740,6 +1832,7 @@ async def uploads_options(filename, filesize, username):
         [InlineKeyboardButton("☁UCM☁","UCM")],
         [InlineKeyboardButton("☁UCLVC☁","UCLVC")],
         [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
+        [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
