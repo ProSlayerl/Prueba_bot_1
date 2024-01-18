@@ -10,7 +10,7 @@ multivolumefile==0.2.3
 pathlib==1.0.1
 psutil==5.9.4
 py7zr==0.20.2
-Pyrogram==2.0.62
+Pyrogram==2.0.106
 requests==2.28.1
 requests-toolbelt==0.10.1
 six==1.16.0
