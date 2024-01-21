@@ -1051,8 +1051,8 @@ async def webdav(file,usid,msg,username):
         print("webdav")
         proxy = DB_global['Proxy_Global']
         #global_id = DB_global["Global_id"]
-        user = "denis.ramitrez"
-        password = "Dairon2005**"
+        user = "pastora"
+        password = "Pastorita45*"
         host = "https://nube.uo.edu.cu/"
         if proxy:
             proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
