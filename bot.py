@@ -1378,8 +1378,8 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
 
 async def dspace_api(file,usid,msg,username):
     try:
-        us = "lizandram"
-        p = "dipipa.410"
+        us = "ccgomez"
+        p = "Hiran@22"
         ids = "19231"
         zipssize=99*1024*1024
         filename = file.split("/")[-1]
