@@ -896,7 +896,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 		connector = aiohttp.TCPConnector()
 		async with aiohttp.ClientSession(connector=connector) as session:
 			payload = payload = {}
-			payload["source"] = "/index.php/spu/user/profile"
+			payload["source"] = "/index.php/revsaludpublica/user/profile"
 			payload["username"] = "daironvf"
 			payload["password"] = "Dairon2005#"
 			async with session.post(host+"login/signIn", data=payload) as e:
