@@ -519,7 +519,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
             return
 
         if out_message.startswith('/set') and username in admins:
-            clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','GRM,AULAENSAP, EDICIONES']
+            clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','GRM,AULAENSAP, EDICIONES , REVSALUDPUBLICA']
             lista = out_message.split(' ')
             if len(lista) == 3:
                 Nube = lista[1] 
@@ -691,9 +691,9 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'SPU', 'EDICIONES','UCLVC','DSPACE','UO']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', '', 'EDICIONES','UCLVC','DSPACE','UO', 'REVSALUDPUBLICA']
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
-    login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
+    login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES' , 'REVSALUDPUBLICA']
     
     if input_mensaje in clouds:
         if input_mensaje == 'UCLV' and not DB_global['Estado_de_uclv']:
@@ -753,7 +753,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                 if input_mensaje == "REVISTAS.UDG":
                     await rudg_api(Temp_dates[username]['file'],user_id,msg,username)
                     return  
-                if input_mensaje == "SPU":
+                if input_mensaje == "":
                     await medisur_api(Temp_dates[username]['file'],user_id,msg,username)
                     return
                 if input_mensaje == 'Privada':
@@ -882,7 +882,7 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
     except Exception as e:
         print("UPLOADER "+str(e))
 
-async def spu_api(file,usid,msg,username):
+async def revsaludpublica_api(file,usid,msg,username):
 	try:
 		zipssize=19*1024*1024
 		filename = file.split("/")[-1]
@@ -1290,7 +1290,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                 try:
                     current = Path(file).stat().st_size
                     fname = file.split("/")[-1]
-                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_spu(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
+                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_revsaludpublica(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
                     async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
                         html = await resp.text()
                         await save_logs(resp.status)
@@ -1836,7 +1836,7 @@ async def uploads_options(filename, filesize, username):
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
-        [InlineKeyboardButton("☁SPU☁","SPU")],
+        [InlineKeyboardButton("☁REVISTAPUBLICA☁","REVSALUDPUBLICA")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
