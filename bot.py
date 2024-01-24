@@ -691,7 +691,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC','DSPACE','UO']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'SPU', 'EDICIONES','UCLVC','DSPACE','UO']
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
     login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
@@ -753,7 +753,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                 if input_mensaje == "REVISTAS.UDG":
                     await rudg_api(Temp_dates[username]['file'],user_id,msg,username)
                     return  
-                if input_mensaje == "MEDISUR":
+                if input_mensaje == "SPU":
                     await medisur_api(Temp_dates[username]['file'],user_id,msg,username)
                     return
                 if input_mensaje == 'Privada':
@@ -882,11 +882,11 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
     except Exception as e:
         print("UPLOADER "+str(e))
 
-async def medisur_api(file,usid,msg,username):
+async def spu_api(file,usid,msg,username):
 	try:
 		zipssize=19*1024*1024
 		filename = file.split("/")[-1]
-		host = "https://medisur.sld.cu/index.php/medisur/"
+		host = "https://revsaludpublica.sld.cu/index.php"
 		filesize = Path(file).stat().st_size
 		print(21)
 		proxy = None #Configs[username]["gp"]
@@ -896,7 +896,7 @@ async def medisur_api(file,usid,msg,username):
 		connector = aiohttp.TCPConnector()
 		async with aiohttp.ClientSession(connector=connector) as session:
 			payload = payload = {}
-			payload["source"] = "/index.php/medisur/user/profile"
+			payload["source"] = "/index.php/spu/user/profile"
 			payload["username"] = "daironvf"
 			payload["password"] = "Dairon2005#"
 			async with session.post(host+"login/signIn", data=payload) as e:
@@ -1051,8 +1051,8 @@ async def webdav(file,usid,msg,username):
         print("webdav")
         proxy = DB_global['Proxy_Global']
         #global_id = DB_global["Global_id"]
-        user = "pastora"
-        password = "Pastorita45*"
+        user = "camila.guerra"
+        password = "Locas123"
         host = "https://nube.uo.edu.cu/"
         if proxy:
             proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
@@ -1290,7 +1290,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                 try:
                     current = Path(file).stat().st_size
                     fname = file.split("/")[-1]
-                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
+                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_spu(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
                     async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
                         html = await resp.text()
                         await save_logs(resp.status)
@@ -1378,8 +1378,8 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
 
 async def dspace_api(file,usid,msg,username):
     try:
-        us = "ccgomez"
-        p = "Hiran@22"
+        us = "lizandram"
+        p = "dipipa.410"
         ids = "19231"
         zipssize=99*1024*1024
         filename = file.split("/")[-1]
@@ -1831,13 +1831,12 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁VCL☁","VCL")],
         [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
-        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
+        [InlineKeyboardButton("☁SPU☁","SPU")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
