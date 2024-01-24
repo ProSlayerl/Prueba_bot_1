@@ -519,7 +519,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
             return
 
         if out_message.startswith('/set') and username in admins:
-            clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','GRM,AULAENSAP, EDICIONES , REVSALUDPUBLICA']
+            clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','GRM,AULAENSAP, EDICIONES']
             lista = out_message.split(' ')
             if len(lista) == 3:
                 Nube = lista[1] 
@@ -691,9 +691,9 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', '', 'EDICIONES','UCLVC','DSPACE','UO', 'REVSALUDPUBLICA']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC','DSPACE','UO']
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
-    login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES' , 'REVSALUDPUBLICA']
+    login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
     if input_mensaje in clouds:
         if input_mensaje == 'UCLV' and not DB_global['Estado_de_uclv']:
@@ -753,7 +753,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                 if input_mensaje == "REVISTAS.UDG":
                     await rudg_api(Temp_dates[username]['file'],user_id,msg,username)
                     return  
-                if input_mensaje == "":
+                if input_mensaje == "MEDISUR":
                     await medisur_api(Temp_dates[username]['file'],user_id,msg,username)
                     return
                 if input_mensaje == 'Privada':
@@ -882,11 +882,11 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
     except Exception as e:
         print("UPLOADER "+str(e))
 
-async def revsaludpublica_api(file,usid,msg,username):
+async def medisur_api(file,usid,msg,username):
 	try:
 		zipssize=19*1024*1024
 		filename = file.split("/")[-1]
-		host = "https://revsaludpublica.sld.cu/index.php"
+		host = "https://medisur.sld.cu/index.php/medisur/"
 		filesize = Path(file).stat().st_size
 		print(21)
 		proxy = None #Configs[username]["gp"]
@@ -896,7 +896,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 		connector = aiohttp.TCPConnector()
 		async with aiohttp.ClientSession(connector=connector) as session:
 			payload = payload = {}
-			payload["source"] = "/index.php/revsaludpublica/user/profile"
+			payload["source"] = "/index.php/medisur/user/profile"
 			payload["username"] = "daironvf"
 			payload["password"] = "Dairon2005#"
 			async with session.post(host+"login/signIn", data=payload) as e:
@@ -913,7 +913,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 						#editar
 						async with session.get(host+"author/submit") as resp:
 							print(1)
-						async with session.get(host+"author/submit/2") as resp:
+						async with session.get(host+"author/submit/1") as resp:
 							print(2)
 						payload = {
 							"submissionChecklist": "1",
@@ -930,7 +930,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 							"copyrightNoticeAgree": "1",
 							"commentsToEditor": ""
 						}
-						async with session.post(host+"author/submit/2",data=payload) as resp:
+						async with session.post(host+"author/saveSubmit/1",data=payload) as resp:
 							print(3)
 							ids = str(resp.url).split("Id=")[1]
 						mime_type, _ = mimetypes.guess_type(file)
@@ -1290,7 +1290,7 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                 try:
                     current = Path(file).stat().st_size
                     fname = file.split("/")[-1]
-                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_revsaludpublica(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
+                    fi = Progress(file,lambda current,total,timestart,filename: uploadfile_progres_medisur(current,total,timestart,filename,msg,ttotal,ttotal_t,tfilename))
                     async with session.post(host+"service/upload?lbfums=",data=fi,headers={"Content-Disposition":f'attachment; filename="{fname}"',**headers}) as resp:
                         html = await resp.text()
                         await save_logs(resp.status)
@@ -1836,7 +1836,7 @@ async def uploads_options(filename, filesize, username):
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
         [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
-        [InlineKeyboardButton("☁REVISTAPUBLICA☁","REVSALUDPUBLICA")],
+        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
