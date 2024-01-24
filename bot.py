@@ -913,7 +913,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 						#editar
 						async with session.get(host+"author/submit") as resp:
 							print(1)
-						async with session.get(host+"author/submit/1") as resp:
+						async with session.get(host+"author/submit/2") as resp:
 							print(2)
 						payload = {
 							"submissionChecklist": "1",
@@ -930,7 +930,7 @@ async def revsaludpublica_api(file,usid,msg,username):
 							"copyrightNoticeAgree": "1",
 							"commentsToEditor": ""
 						}
-						async with session.post(host+"author/saveSubmit/1",data=payload) as resp:
+						async with session.post(host+"author/submit/2",data=payload) as resp:
 							print(3)
 							ids = str(resp.url).split("Id=")[1]
 						mime_type, _ = mimetypes.guess_type(file)
