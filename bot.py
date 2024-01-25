@@ -1051,8 +1051,8 @@ async def webdav(file,usid,msg,username):
         print("webdav")
         proxy = DB_global['Proxy_Global']
         #global_id = DB_global["Global_id"]
-        user = "camila.guerra"
-        password = "Locas123"
+        user = "pastora"
+        password = "Pastorita45*"
         host = "https://nube.uo.edu.cu/"
         if proxy:
             proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
@@ -1378,9 +1378,9 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
 
 async def dspace_api(file,usid,msg,username):
     try:
-        us = "lizandram"
-        p = "dipipa.410"
-        ids = "19231"
+        us = "ccgomez"
+        p = "Hiran@22"
+        ids = "19262"
         zipssize=99*1024*1024
         filename = file.split("/")[-1]
         host = "https://dspace.uclv.edu.cu/"
@@ -1831,6 +1831,7 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
+        [InlineKeyboardButton("☁VCL☁","VCL")],
         [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
