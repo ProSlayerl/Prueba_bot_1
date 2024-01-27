@@ -1050,7 +1050,7 @@ async def webdav(file,usid,msg,username):
     try:
         print("webdav")
         proxy = DB_global['Proxy_Global']
-        global_id = "7"
+        #global_id = DB_global["Global_id"]
         user = "rafael.rodriguezt"
         password = "Rafael*21"
         host = "https://nube.uo.edu.cu/"
@@ -1113,14 +1113,10 @@ async def webdav(file,usid,msg,username):
                         offset+= len(file_chunk)
                     print("Finalizado")
                     await msg.edit("✅ **Finalizado** ✅")
-                    #u1 = webdav_url+"/.file"
-                    u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
-                    #await bot.send_message(username,f"📂  [{filename}]({u1})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
+                    u = webdav_url+"/.file"
+                    #u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
+                    await bot.send_message(username,f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
                     complete = False
-                    with open(filename+".txt","w") as txt:
-                        txt.write(u)
-                    await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#descargasfree #superinlinesearch\n")
-                    os.unlink(filename+".txt")
             except Exception as ex:
                 await save_logs(ex)
     except Exception as ex:
@@ -1382,8 +1378,8 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
 
 async def dspace_api(file,usid,msg,username):
     try:
-        us = "ccgomez"
-        p = "Hiran@22"
+        us = "lizandram"
+        p = "dipipa.410"
         ids = "19262"
         zipssize=99*1024*1024
         filename = file.split("/")[-1]
@@ -1835,7 +1831,6 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁VCL☁","VCL")],
         [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
