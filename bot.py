@@ -1051,8 +1051,8 @@ async def webdav(file,usid,msg,username):
         print("webdav")
         proxy = DB_global['Proxy_Global']
         global_id = "7"
-        user = "elizabeth.beaton"
-        password = "Beaton*24"
+        user = "diannis.liranza"
+        password = "Liranza*24"
         host = "https://nube.uo.edu.cu/"
         if proxy:
             proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
@@ -1835,13 +1835,9 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁VCL☁","VCL")],
-        [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
-        [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
-        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
