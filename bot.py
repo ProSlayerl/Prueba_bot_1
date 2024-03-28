@@ -1050,9 +1050,9 @@ async def webdav(file,usid,msg,username):
     try:
         print("webdav")
         proxy = DB_global['Proxy_Global']
-        global_id = "7"
-        user = "diannis.liranza"
-        password = "Liranza*24"
+        #global_id = DB_global["Global_id"]
+        user = "elizabeth.beaton"
+        password = "Beaton*21"
         host = "https://nube.uo.edu.cu/"
         if proxy:
             proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
@@ -1113,14 +1113,10 @@ async def webdav(file,usid,msg,username):
                         offset+= len(file_chunk)
                     print("Finalizado")
                     await msg.edit("✅ **Finalizado** ✅")
-                    #u1 = webdav_url+"/.file"
-                    u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
-                    #await bot.send_message(username,f"📂  [{filename}]({u1})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
+                    u = webdav_url+"/.file"
+                    #u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
+                    await bot.send_message(username,f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
                     complete = False
-                    with open(filename+".txt","w") as txt:
-                        txt.write(u)
-                    await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#descargasfree #superinlinesearch\n")
-                    os.unlink(filename+".txt")
             except Exception as ex:
                 await save_logs(ex)
     except Exception as ex:
@@ -1384,7 +1380,7 @@ async def dspace_api(file,usid,msg,username):
     try:
         us = "ccgomez"
         p = "Hiran@22"
-        ids = "19231"
+        ids = "19262"
         zipssize=99*1024*1024
         filename = file.split("/")[-1]
         host = "https://dspace.uclv.edu.cu/"
@@ -1445,7 +1441,7 @@ async def tesisld_api(file,usid,msg,username):
 	try:
 		zipssize=149*1024*1024
 		filename = file.split("/")[-1]
-		host = "https://tesis.sld.cu/"
+		host = "http://revsaludpublica.sld.cu/"
 		filesize = Path(file).stat().st_size
 		print(21)
 		headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Mobile Safari/537.36"}
@@ -1458,8 +1454,8 @@ async def tesisld_api(file,usid,msg,username):
 			connector = aiohttp_socks.ProxyConnector.from_url(proxy)
 		async with aiohttp.ClientSession(connector=connector) as session:
 			payload = payload = {}
-			payload["F_UserName"] = "lazaro03"
-			payload["F_Password"] = "Michel03."
+			payload["F_UserName"] = "daironvf"
+			payload["F_Password"] = "Dairon2005#"
 			async with session.post(host+"index.php?P=UserLogin", data=payload,headers=headers) as e:
 				print(222)
 				print(e.url)
@@ -1531,7 +1527,7 @@ async def tesisld_api(file,usid,msg,username):
 						message+=li+"\n"
 					t.write(message)
 					t.close()
-				await bot.send_document(usid,txtname,thumb="thumb.jpg",caption="👤 Usuario: lazaro03\n🔑 Contraseña: Michel03.")
+				await bot.send_document(usid,txtname,thumb="thumb.jpg",caption="👤 Usuario: bitzero\n🔑 Contraseña: bitzero2005")
 				os.unlink(txtname)
 			else:
 				print(111)
@@ -1834,10 +1830,13 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 
 async def uploads_options(filename, filesize, username):
     buttons = [
-        [InlineKeyboardButton("☁UCM☁","UCM")],
+        [InlineKeyboardButton("TESISLS","TESISLS")],
+        [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("☁UCLV☁","UCLV")],
         [InlineKeyboardButton("☁LTU☁","LTU")],
+        [InlineKeyboardButton("☁UCM","UCM☁")],
+        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
