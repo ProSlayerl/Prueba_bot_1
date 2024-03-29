@@ -12,10 +12,10 @@ import asyncio
 from urllib.parse import unquote_plus
 from time import time,sleep
 import bs4
+import uuid
 from io import BufferedReader
 import mimetypes
 import requests
-import random
 import json
 from tools.funciones import filezip,descomprimir,limite_msg,files_formatter,mediafiredownload, download_progres , downloadmessage_progres , ytdlp_downloader, sevenzip, uploadfile_progres
 from clients.token import MoodleClient
@@ -27,9 +27,6 @@ from verify_user import VerifyUserData
 from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
-import re
-from DspaceUclv import DspaceClient
-import uuid
 
 admins = ["Pro_Slayerr"]
 Temp_dates = {}
@@ -622,6 +619,69 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
             files.append(f"downloads/{username}/{name}")
     return files
 
+async def get_():
+    message = await bot.get_messages(-1001837970426,message_ids=9432)
+    return message.text
+
+def generate():
+    prefix = "web-file-upload-"
+    random_string = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(32))
+    unique_id = str(uuid.uuid4().time_low)
+
+    random_name = f"{prefix}{random_string}-{unique_id}"
+    return random_name
+
+async def webdav(file,usid,msg,username):
+    try:
+        host = "https://nube.uo.edu.cu/"
+        proxy = aiohttp.TCPConnector()
+        file = await file_renamer(file)
+        filename = file.split("/")[-1]
+        filesize = Path(file).stat().st_size
+        headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
+        async with aiohttp.ClientSession(connector=proxy) as session:
+            await msg.edit(f"Conectando 🔴...")
+            html = await get_()
+            try:data = json.loads(html)
+            except:
+                await msg.edit("Datos no válidos o servidor deshabilitado [...]")
+                return
+            ids = data["nc_username"]
+            session.cookie_jar.update_cookies(data)
+            async with session.get(host+"index.php/apps/files/") as resp:
+                html = await resp.text()
+            soup = BeautifulSoup(html,'html.parser')
+            requesttoken = soup.find('head')['data-requesttoken']
+            webdav_url = host+"remote.php/dav/uploads/"+ids+"/"+ generate()
+            try:
+                async with session.request("MKCOL", webdav_url,headers={"requesttoken":requesttoken,**headers}) as resp:
+                    print("MKCOL "+str(resp.status))
+            except:
+                await msg.edit("Este servidor está temporalmente fuera de servicio [await_please]")
+                return
+            mime_type, _ = mimetypes.guess_type(file)
+            if not mime_type:
+                mime_type = "application/x-7z-compressed"
+            complete = True
+            await msg.edit(f"⬆️ Uploading 0 de {sizeof_fmt(filesize)}")
+            with open(file, 'rb') as f:
+                offset = 0
+                vchunk = 10
+                while True:
+                    file_chunk = f.read(vchunk*1024*1024)
+                    if not file_chunk:
+                        break
+                    async with session.put(f"{webdav_url}/{offset}",data=file_chunk,headers={'Content-Type': mime_type,"requesttoken":requesttoken}) as resp:
+                        try:
+                            await msg.edit(f"⬆️ Uploading {sizeof_fmt(offset)} de {sizeof_fmt(filesize)}")
+                        except:pass
+                    offset+= len(file_chunk)
+                u = webdav_url+"/{11}/"+str(filesize)+"/"+filename
+                await msg.edit(f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
+                complete = False
+    except Exception as ex:
+        print(str(ex))
+
 @bot.on_callback_query()
 async def callback_handler(client: Client, callback_query: CallbackQuery):
     username = callback_query.from_user.username
@@ -636,8 +696,8 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
             data = json.loads(data[2])
             msg = "📝 Datos:\n\n"
             msg+= f"📌 Plan: {data['plan']}\n"
-            msg+= f"📌 Limite: {sizeof_fmt(data['limite'])}\n"
-            msg+= f"📌 Subido: {sizeof_fmt(data['total'])}"
+            msg+= f"📌 Limite: {data['limite']} GiB\n"
+            msg+= f"📌 Subido: {data['total']} GiB"
             await bot.send_message(username,msg)
         except Exception as e:
             await bot.send_message(username,f"🔥Elige tu Plan🔥\n\n➡️ Plan Básico:\n💎15 GB de transferencia diaria\n📱 110 CUP\n\n➡️ Plan Estándar:\n💎25 GB de transferencia diaria\n📱 170 CUP\n\n➡️ Plan Avanzado:\n💎50 GB de transferencia diaria\n📱 250 CUP\n\n➡️Plan Premium:\n💎100 GB de transferencia diaria\n📱 280 CUP\n\n➡️Plan UCLV:\n💎20 GB  de trasferencia diaria\n📲250 CUP")
@@ -691,7 +751,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC','DSPACE','UO']
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC',"UO"]
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
     login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
@@ -724,6 +784,9 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                 if input_mensaje == "TESISLS":
                     await tesisld_api(Temp_dates[username]['file'],user_id,msg,username)
                     return
+                if input_mensaje == "UO":
+                    await webdav(Temp_dates[username]['file'],user_id,msg,username)
+                    return
                 if input_mensaje == "UCLVC":
                     if d["plan"]!="uclv":
                         await msg.edit("💢 No puede usar este Servidor 💢\n\n🗣 Disponible con el plan Nube UCLV")
@@ -731,16 +794,6 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     else:
                         await webmailuclv_api(Temp_dates[username]['file'],user_id,msg,username)
                         return
-                if input_mensaje == "UO":
-                    if d["plan"]!="uo":
-                        await msg.edit("💢 No puede usar este Servidor 💢\n\n🗣 Disponible con el plan Nube UO")
-                        return
-                    else:
-                        await webdav(Temp_dates[username]['file'],user_id,msg,username)
-                        return
-                if input_mensaje == "DSPACE":
-                    await dspace_api(Temp_dates[username]['file'],user_id,msg,username)
-                    return
                 if input_mensaje == "EVEAUH":
                     Config_temp[username]['host'] = "https://evea.uh.cu/"
                     Config_temp[username]['user'] = "alanis.dfelix1@estudiantes.fq.uh.cu"
@@ -864,7 +917,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     await msg.edit('**Ha ocurrido un error**')
                 shutil.rmtree(f'downloads/{username}')
                 return
-seg = 0
+
 def uploadfile_progres(chunk,filesize,start,filename,message):
     try:
         now = time()
@@ -880,7 +933,7 @@ def uploadfile_progres(chunk,filesize,start,filename,message):
             message.edit(msg)
         seg = localtime().tm_sec
     except Exception as e:
-        print("UPLOADER "+str(e))
+        print(str(e))
 
 async def medisur_api(file,usid,msg,username):
 	try:
@@ -1007,120 +1060,6 @@ async def medisur_api(file,usid,msg,username):
 					await bot.send_document(usid,txtname,thumb="thumb.jpg")
 	except Exception as e:
 		print(str(e))
-
-def uploadfile_progres_medisur(chunk,filesize,start,filename,message,ttotal,ttotal_t,tfilename):
-    try:
-        now = time()
-        diff = now - start
-        mbs = chunk / diff
-        msg = f"💭 ɴᴀᴍᴇ: {tfilename}\n\n"
-        chunk = ttotal+chunk
-        try:
-            msg+=update_progress_bar(chunk,ttotal_t)+ "  " + sizeof_fmt(mbs)+"/s\n\n"
-        except:pass
-        msg+= f"⚡️ ᴜᴘʟᴏᴀᴅɪɴɢ: {sizeof_fmt(chunk)} of {sizeof_fmt(ttotal_t)}\n\n"
-        global seg
-        if seg != localtime().tm_sec:
-            message.edit(msg)
-        seg = localtime().tm_sec
-    except Exception as e:
-        print("error: ",str(e))
-
-def update_progress_bar(inte,max):
-    percentage = inte / max
-    percentage *= 100
-    percentage = round(percentage)
-    hashes = int(percentage / 5)
-    spaces = 20 - hashes
-    progress_bar = "[ " + "•" * hashes + "•" * spaces + " ]"
-    percentage_pos = int(hashes / 1)
-    percentage_string = str(percentage) + "%"
-    progress_bar = progress_bar[:percentage_pos] + percentage_string + progress_bar[percentage_pos + len(percentage_string):]
-    return(progress_bar)
-
-def generate():
-    prefix = "web-file-upload-"
-    random_string = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(32))
-    unique_id = str(uuid.uuid4().time_low)
-
-    random_name = f"{prefix}{random_string}-{unique_id}"
-    return random_name
-
-async def webdav(file,usid,msg,username):
-    try:
-        print("webdav")
-        proxy = DB_global['Proxy_Global']
-        #global_id = DB_global["Global_id"]
-        user = "elizabeth.beaton"
-        password = "Beaton*21"
-        host = "https://nube.uo.edu.cu/"
-        if proxy:
-            proxy = aiohttp_socks.ProxyConnector.from_url(f"{proxy}")
-        else:
-            proxy = aiohttp.TCPConnector()
-        file = await file_renamer(file)
-        filename = file.split("/")[-1]
-        filesize = Path(file).stat().st_size
-        headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
-        async with aiohttp.ClientSession(connector=proxy) as session:
-            print(1)
-            ids = "70261DD3-0DEA-439E-A42D-6CBE26172DA4"
-            await msg.edit(f"Conectando 🔴")
-            #login
-            async with session.get(host+"index.php/login",headers=headers) as resp:
-                html = await resp.text()
-            soup = BeautifulSoup(html,'html.parser')
-            requesttoken = soup.find('head')['data-requesttoken']
-            print(requesttoken)
-            timezone = 'America/Mexico_City'
-            timezone_offset = '-5'
-            payload = {'user':user,'password':password,'timezone':timezone,'timezone_offset':timezone_offset,'requesttoken':requesttoken}
-            async with session.post(host+"index.php/login",data=payload,headers=headers) as resp:
-                print(f"login {resp.status}")
-            async with session.get(host+"index.php/apps/files/") as resp:
-                html = await resp.text()
-            soup = BeautifulSoup(html,'html.parser')
-            requesttoken = soup.find('head')['data-requesttoken']
-            print(requesttoken)
-            await msg.edit(f"Conectado 🟢")
-            #login
-            try:
-                webdav_url = host+"remote.php/dav/uploads/"+ids+"/"+ generate()
-                print(webdav_url)
-                try:
-                    async with session.request("MKCOL", webdav_url,headers={"requesttoken":requesttoken,**headers}) as resp:
-                        print("MKCOL "+str(resp.status))
-                except:
-                    await msg.edit("Este servidor está temporalmente fuera de servicio [await_please]")
-                    return
-                print("up_webdav")
-                mime_type, _ = mimetypes.guess_type(file)
-                if not mime_type:
-                    mime_type = "application/x-7z-compressed"
-                complete = True
-                await msg.edit(f"⬆️ Uploading 0 de {sizeof_fmt(filesize)}")
-                with open(file, 'rb') as f:
-                    offset = 0
-                    vchunk = 10
-                    while True:
-                        file_chunk = f.read(vchunk*1024*1024)
-                        if not file_chunk:
-                            break
-                        async with session.put(f"{webdav_url}/{offset}",data=file_chunk,headers={'Content-Type': mime_type,"requesttoken":requesttoken}) as resp:
-                            try:
-                                await msg.edit(f"⬆️ Uploading {sizeof_fmt(offset)} de {sizeof_fmt(filesize)}")
-                            except:pass
-                        offset+= len(file_chunk)
-                    print("Finalizado")
-                    await msg.edit("✅ **Finalizado** ✅")
-                    u = webdav_url+"/.file"
-                    #u = webdav_url+"/{"+str(global_id)+"}/"+str(filesize)+"/"+filename
-                    await bot.send_message(username,f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
-                    complete = False
-            except Exception as ex:
-                await save_logs(ex)
-    except Exception as ex:
-        await save_logs(str(ex))
 
 async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
     try:
@@ -1370,78 +1309,17 @@ async def webmailuclv_api(file,usid,msg,username,myfiles=False,deleteall=False):
                     message+=f"{link}\n"
             with open(filename+".txt","w") as txt:
                 txt.write(message)
-            await bot.send_document(usid,filename+".txt",thumb="thumb.jpg",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#descargasfree #superinlinesearch\n")
+            await bot.send_document(usid,filename+".txt",thumb="thumb.png",caption="😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
             os.unlink(filename+".txt")
     except Exception as ex:
         await save_logs("WebM "+str(ex))
         return
 
-async def dspace_api(file,usid,msg,username):
-    try:
-        us = "ccgomez"
-        p = "Hiran@22"
-        ids = "19262"
-        zipssize=99*1024*1024
-        filename = file.split("/")[-1]
-        host = "https://dspace.uclv.edu.cu/"
-        filesize = Path(file).stat().st_size
-        print(21)
-        file = await file_renamer(file)
-        filename = file.split("/")[-1]
-        headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Mobile Safari/537.36"}
-        proxy = None #Configs[username]["gp"]
-        headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'}
-        #login
-        await msg.edit("⚡️ ᴄᴏɴᴇᴄᴛᴀɴᴅᴏ .... ⚡️")
-        connector = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=connector) as session:
-            cli = DspaceClient(us,p,ids)
-            login = cli.login()
-            try:
-                if login:
-                    await msg.edit("✅ **ᴄᴏɴᴇᴄᴛᴀᴅᴏ** ✅")
-                else:
-                    await msg.edit("📵 __ɴᴏ sᴇ ᴘᴜᴇᴅᴏ ᴄᴏɴᴇᴄᴛᴀʀ__")
-                    return
-            except:pass
-            if filesize-1048>zipssize:
-                await msg.edit(f"📦 **Comprimiendo en zips**")
-                files = await bot.loop.run_in_executor(None, sevenzip, file, None, zipssize)
-            else:
-                files = [file]
-            linksz = []
-            #await msg.delete()
-            for file in files:
-                try:
-                    filen = file.split('/')[-1]
-                    await msg.edit(f"**🔱 ʟᴀ ɴᴜʙᴇ ɴᴏ ᴍᴜᴇsᴛʀᴀ ᴘʀᴏɢʀᴇsᴏ 🔱 ᴘᴇʀᴏ sᴜ ᴀʀᴄʜɪᴠᴏs sᴇ ᴇsᴛᴀ sᴜʙɪᴇɴᴅᴏ ᴀ ʟᴀ ɴᴜʙᴇ ⚡️ {filen}**")
-                    upload = await bot.loop.run_in_executor(None, cli.upload, file)
-                    await bot.send_message(username,f"**[{filen}]({upload['url']})**")
-                    linksz.append(upload['url'])
-                    #os.unlink(file)
-                except Exception as ex:
-                    await bot.send_message(username,"Up "+str(ex))
-                    pass
-            if len(linksz)==0:
-                await msg.edit("😔 No se subió ningún archivo")
-                return
-            #sawait msg.edit(f"✅ 𝑭𝒊𝒏𝒂𝒍𝒊𝒛𝒂𝒅𝒐 𝒆𝒙𝒊𝒕𝒐𝒔𝒂𝒎𝒆𝒏𝒕𝒆")
-            await msg.delete()
-            message = ""
-            for link in linksz:
-                message+=f"{link}\n"
-            with open(filename+".txt","w") as txt:
-                txt.write(message)
-            await bot.send_document(usid,filename+".txt",caption=f"👤 {us}\n🔑 {p}🔗 {host}\n\n😊 **Gracias Por Usar Nuestro Servicio**\n#rayserverdl #superinlinesearch\n")
-    except Exception as e:
-        await bot.send_message(username,"DSPACE- "+str(e))
-    return
-
 async def tesisld_api(file,usid,msg,username):
 	try:
 		zipssize=149*1024*1024
 		filename = file.split("/")[-1]
-		host = "http://revsaludpublica.sld.cu/"
+		host = "https://tesis.sld.cu/"
 		filesize = Path(file).stat().st_size
 		print(21)
 		headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Mobile Safari/537.36"}
@@ -1454,8 +1332,8 @@ async def tesisld_api(file,usid,msg,username):
 			connector = aiohttp_socks.ProxyConnector.from_url(proxy)
 		async with aiohttp.ClientSession(connector=connector) as session:
 			payload = payload = {}
-			payload["F_UserName"] = "daironvf"
-			payload["F_Password"] = "Dairon2005#"
+			payload["F_UserName"] = "lazaro03"
+			payload["F_Password"] = "Michel03."
 			async with session.post(host+"index.php?P=UserLogin", data=payload,headers=headers) as e:
 				print(222)
 				print(e.url)
@@ -1527,7 +1405,7 @@ async def tesisld_api(file,usid,msg,username):
 						message+=li+"\n"
 					t.write(message)
 					t.close()
-				await bot.send_document(usid,txtname,thumb="thumb.jpg",caption="👤 Usuario: bitzero\n🔑 Contraseña: bitzero2005")
+				await bot.send_document(usid,txtname,thumb="thumb.jpg",caption="👤 Usuario: lazaro03\n🔑 Contraseña: Michel03.")
 				os.unlink(txtname)
 			else:
 				print(111)
@@ -1830,13 +1708,7 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 
 async def uploads_options(filename, filesize, username):
     buttons = [
-        [InlineKeyboardButton("TESISLS","TESISLS")],
-        [InlineKeyboardButton("☁DSPACE☁","DSPACE")],
         [InlineKeyboardButton("☁UO☁","UO")],
-        [InlineKeyboardButton("☁UCLV☁","UCLV")],
-        [InlineKeyboardButton("☁LTU☁","LTU")],
-        [InlineKeyboardButton("☁UCM","UCM☁")],
-        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
