@@ -28,7 +28,7 @@ from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
 
-admins = ["Pro_Slayerr"]
+admins = ["Pro_Slayerr","raydel0307"]
 Temp_dates = {}
 DB_global = {}
 Config_temp = {}
@@ -445,7 +445,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 timeout = aiohttp.ClientTimeout(total=60 * 60)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     async with session.get(url,ssl=False,timeout=timeout) as r:
-                        try:filename = unquote_plus(url.split("/")[-1])
+                        try:filename = unqte_plus(url.split("/")[-1])
                         except:filename = r.content_disposition.filename	
                         if "?" in filename:filename = filename.split("?")[0]
                         fsize = int(r.headers.get("Content-Length"))
@@ -548,7 +548,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 button2 = InlineKeyboardButton("🌀 Estándar",f"add {d[1]} e")
                 button3 = InlineKeyboardButton("🌀 Avanzado",f"add {d[1]} a")
                 button4 = InlineKeyboardButton("🌀 Premium",f"add {d[1]} p")
-                button5 = InlineKeyboardButton("⚜️ NUBE UO ⚜️",f"add {d[1]} uo")
+                button5 = InlineKeyboardButton("⚜️ NUBE  ⚜️",f"add {d[1]} ")
                 button6 = InlineKeyboardButton("⚜️ NUBE UCLV ⚜️",f"add {d[1]} uclv")
                 buttons = [[button1,button2],[button3,button4],[button5],[button6]]
                 reply_markup = InlineKeyboardMarkup(buttons)
@@ -1708,6 +1708,11 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 
 async def uploads_options(filename, filesize, username):
     buttons = [
+        [InlineKeyboardButton("☁UCM☁","UCM")],
+        [InlineKeyboardButton("☁UCLV☁","UCLVC")],
+        [InlineKeyboardButton("☁LTU☁","LTU")],
+        [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
+        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
