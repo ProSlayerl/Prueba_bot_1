@@ -445,7 +445,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 timeout = aiohttp.ClientTimeout(total=60 * 60)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     async with session.get(url,ssl=False,timeout=timeout) as r:
-                        try:filename = unqte_plus(url.split("/")[-1])
+                        try:filename = unquote_plus(url.split("/")[-1])
                         except:filename = r.content_disposition.filename	
                         if "?" in filename:filename = filename.split("?")[0]
                         fsize = int(r.headers.get("Content-Length"))
@@ -548,7 +548,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 button2 = InlineKeyboardButton("🌀 Estándar",f"add {d[1]} e")
                 button3 = InlineKeyboardButton("🌀 Avanzado",f"add {d[1]} a")
                 button4 = InlineKeyboardButton("🌀 Premium",f"add {d[1]} p")
-                button5 = InlineKeyboardButton("⚜️ NUBE  ⚜️",f"add {d[1]} ")
+                button5 = InlineKeyboardButton("⚜️ NUBE UO ⚜️",f"add {d[1]} uo")
                 button6 = InlineKeyboardButton("⚜️ NUBE UCLV ⚜️",f"add {d[1]} uclv")
                 buttons = [[button1,button2],[button3,button4],[button5],[button6]]
                 reply_markup = InlineKeyboardMarkup(buttons)
@@ -641,7 +641,8 @@ async def webdav(file,usid,msg,username):
         headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
         async with aiohttp.ClientSession(connector=proxy) as session:
             await msg.edit(f"Conectando 🔴...")
-            html = await get_()
+            async with session.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"11"},headers={'Content-Type':'application/json'}) as resp:
+            	html = await resp.text()
             try:data = json.loads(html)
             except:
                 await msg.edit("Datos no válidos o servidor deshabilitado [...]")
