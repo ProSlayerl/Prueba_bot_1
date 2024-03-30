@@ -1710,11 +1710,6 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 
 async def uploads_options(filename, filesize, username):
     buttons = [
-        [InlineKeyboardButton("☁UCM☁","UCM")],
-        [InlineKeyboardButton("☁UCLV☁","UCLVC")],
-        [InlineKeyboardButton("☁LTU☁","LTU")],
-        [InlineKeyboardButton("☁AULAENSAP☁","AULAENSAP")],
-        [InlineKeyboardButton("☁EVEAUH☁","EVEAUH")],
         [InlineKeyboardButton("☁UO☁","UO")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
