@@ -13,6 +13,8 @@ from urllib.parse import unquote_plus
 from time import time,sleep
 import bs4
 import uuid
+import re
+import random
 from io import BufferedReader
 import mimetypes
 import requests
@@ -641,8 +643,7 @@ async def webdav(file,usid,msg,username):
         headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
         async with aiohttp.ClientSession(connector=proxy) as session:
             await msg.edit(f"Conectando 🔴...")
-            async with session.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"11"},headers={'Content-Type':'application/json'}) as resp:
-            	html = await resp.text()
+            html = await get_()
             try:data = json.loads(html)
             except:
                 await msg.edit("Datos no válidos o servidor deshabilitado [...]")
