@@ -3,7 +3,7 @@ from pyrogram import Client , filters
 from config import API_HASH,API_ID,BOT_TOKEN,ID_DB,ID_ACC,ID_DB_data,ID_DB_user,FILE_DB,MSG_LOG
 import os
 from os.path import exists
-from time import localtime
+from time import localtime,sleep
 from json import loads, dumps
 from random import randint
 from pathlib import Path
@@ -14,12 +14,15 @@ from time import time,sleep
 import bs4
 import uuid
 import re
+import urllib
+import urllib.parse
 import random
+import threading
 from io import BufferedReader
 import mimetypes
 import requests
 import json
-from tools.funciones import filezip,descomprimir,limite_msg,files_formatter,mediafiredownload, download_progres , downloadmessage_progres , ytdlp_downloader, sevenzip, uploadfile_progres
+from tools.funciones import filezip,descomprimir,limite_msg,files_formatter,mediafiredownload, download_progres , downloadmessage_progres , sevenzip, uploadfile_progres , ytdlp_downloader
 from clients.token import MoodleClient
 import aiohttp_socks
 from clients.draft import MoodleClient2
@@ -29,6 +32,7 @@ from verify_user import VerifyUserData
 from pyshortext import short
 from xdlink import xdlink
 from datetime import datetime
+import base64
 
 admins = ["Pro_Slayerr","raydel0307"]
 Temp_dates = {}
@@ -40,8 +44,29 @@ download_list = {}
 
 DB_accs = {'accesos':[]}
 seg = 0
+SCT = {}
 
 bot = Client("bot",api_id=API_ID,api_hash=API_HASH,bot_token=BOT_TOKEN)
+
+nubes = {}
+backup_file = "backup.json"
+account_file = "account.json"
+backup_interval = 3
+
+def save_backup():
+    global nubes
+    while True:
+        with open(backup_file, 'w') as f:
+            json.dump(nubes, f)
+        sleep(backup_interval)
+def load_backup():
+    with open(backup_file, 'r') as f:
+        return json.load(f)
+if exists(backup_file):
+    nubes = load_backup()
+    print("BACKUP IMPORTADO")
+else:
+    nubes = {}
 
 class Progress(BufferedReader):
     def __init__(self, filename, read_callback):
@@ -123,6 +148,11 @@ async def start(client: Client, message: Message):
         try:
             os.unlink("downloads/usuarios.db")
         except:pass
+        p = 'downloads/uploads/'
+        if not str(user_id) in nubes:
+            nubes[str(user_id)] = []
+        if not exists(p):
+            os.makedirs(p)
         await m.download(file_name=f"usuarios.db")
         os.rename("downloads/usuarios.db","usuarios.db")
 
@@ -191,12 +221,37 @@ async def start(client: Client, message: Message):
 Bienvenido a este sistema de Descargas, estoy simpre para tí, y ayudarte a descagar cualquier archivo multimedia que desees☺️
 Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire entre otros soportes)''')
             return
-        
-        if out_message.startswith('/ls'):
+        if out_message.startswith("/lsc"):
+            files_cloud = ""
+            current = 0
+            for nub in nubes[str(user_id)]:
+                files_cloud += f'➣ {current} 📄 `{nub["filename"]}`\n'
+                current += 1
+            if len(nubes[str(user_id)]) == 0:
+                files_cloud += "\n"
+            m = "**Archivos Subidos**\n\n"
+            m+= files_cloud+"\n"
+            await bot.send_message(user_id,m)
+
+        elif out_message.startswith('/ls'):
             path = f"downloads/{username}/"
             msg = files_formatter(path,username)
             await limite_msg(msg[0],username,bot)
             return
+
+        if out_message.startswith("/bitzero"):
+            lista = out_message.split(' ')
+            try:
+                SCT["host"] = lista[1]
+                SCT["user"] = lista[2]
+                SCT["passw"] = lista[3]
+                SCT["id"] = lista[4]
+                SCT["zips"] = int(lista[5])
+                SCT["mode"] = lista[6]
+                await send('**⚡️ᴏᴘᴇʀᴀᴄɪóɴ ʀᴇᴀʟɪᴢᴀᴅᴀ⚡️**')
+            except:
+                await bot.send_message(username,"Error en el comando\n/bitzero host user passw id zips mode")
+                return
 
         if out_message.startswith('/c_uclv'):
             lista = out_message.split(' ')
@@ -300,7 +355,52 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 await bot.send_message(username,ex)
             return
 
-        if out_message.startswith("/rm"):
+        if out_message.startswith("/rmc"):
+            try:
+                host = SCT["host"]
+                user = SCT["user"]
+                passw = SCT["passw"]
+                ids = SCT["id"]
+            except:
+                await bot.send_message(username,"Ingrese sus Datos")
+                return
+            text = out_message
+            msg = await bot.send_message(username,f"[•] #rm #cloud #enproceso\n\n<code>Conectando nube...</code>")
+            if "-" in text:
+                lisc = list(range(int(text.split("-")[0].split(" ")[1]),int(text.split("-")[1].split(" ")[0])+1))
+                text =  "/rmc "+' '.join(map(str,lisc))
+            elif "all" in text:
+                   text = "/rmc "+' '.join(map(str,list(range(0,len(nubes[str(user_id)])))))
+            files = text.replace("/rmc ","").split(" ")
+            menos = 0
+            for f in files:
+                try:
+                    fids_split = nubes[str(user_id)][int(f)-menos]['token'].split("-")
+                    total = len(fids_split)
+                    current = 0
+                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36"}
+                    connector = aiohttp.TCPConnector(ssl=False)
+                    async with aiohttp.ClientSession(connector=connector) as session:
+                        async with session.get(host+"/login",headers=headers) as resp:
+                            html = await resp.text()
+                        token = BeautifulSoup(html,"html.parser").find('input',{'name':'csrfToken'})["value"]
+                        login_data = {"password": passw,"remember": 1,"source": "","username": user,"csrfToken":token}
+                        async with session.post(f"{host}/login/signIn", data=login_data, headers=headers) as resp:
+                            print(0)
+                        for t in fids_split:
+                            await msg.edit(f"[•] #rm #cloud #enproceso\n\n<code>Eliminando {round((current/total)*100,1)}%</code>")
+                            csrfToken = token
+                            async with session.post(f"{host}/api/v1/submissions/{ids}/files/{t}?stageId=1",headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36","x-http-method-override": "DELETE","x-requested-with":"XMLHttpRequest","x-csrf-token":csrfToken}) as resp:
+                                print(resp.status)
+                            current += 1
+                        nubes[str(user_id)].pop(int(f)-menos)
+                        menos += 1
+                        await msg.edit(f"[✓] #rm #cloud #finalizado\n\n<code>Eliminado</code>")
+                except Exception as e:
+                    print(e)
+                    await msg.edit(f"[✓] #rm #cloud #error\n\n<code>Error desconocido</code>")
+
+        elif out_message.startswith("/rm"):
             path = f"downloads/{username}/"
             if "_" in out_message:
                 list = out_message.split("_")[1]
@@ -633,6 +733,90 @@ def generate():
     random_name = f"{prefix}{random_string}-{unique_id}"
     return random_name
 
+async def bitzero_uploader(file,usid,msg,username):
+    try:
+        host = SCT["host"]
+        user = SCT["user"]
+        passw = SCT["passw"]
+        ids = SCT["id"]
+        zips = SCT["zips"]
+        mode = SCT["mode"]
+        zipssize=int(zips)*1024*1024
+        filename = file.split("/")[-1]
+        filesize = Path(file).stat().st_size
+        proxy = None
+        headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'}
+        #login
+        msg = await msg.edit("🔴 Conectando ... 🔴")
+        connector = aiohttp.TCPConnector(ssl=False)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(host+"/login",headers=headers) as resp:
+                html = await resp.text()
+            soup = BeautifulSoup(html,"html.parser")
+            csrftoken = soup.find('input',{'name':'csrfToken'})["value"]
+            payload = {"password": passw,"remember": 1,"source": "","username": user,"csrfToken":csrftoken}
+            async with session.post(f"{host}/login/signIn", data=payload, headers=headers) as resp:
+                print(222)
+            #upload
+            if filesize-1048>zipssize:
+                parts = round(filesize / zipssize)
+                await msg.edit(f"📦 𝑪𝒐𝒎𝒑𝒓𝒊𝒎𝒊𝒆𝒏𝒅𝒐\n\n🏷 Total: {parts} partes\n")
+                files = sevenzip(file,volume=zipssize)
+            else:
+                files = [file]
+            print(24)
+            links = []
+            token = ""
+            for file in files:
+                filename = file.split("/")[-1]
+                try:
+                    if mode=="1":
+                        spypng = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf6\x178U\x00\x00\x00\x00IEND\xaeB`\x82'
+                        path = f"downloads/{username}/{filename}_#{usid}@bitzero.png"
+                        with open(path,"wb") as nref:
+                            nref.write(spypng+open(file,"rb").read())
+                    elif mode=="2":
+                        path = file
+                        spypng = '<!DOCTYPE html>\n<html lang="es">\n<bytes>'
+                        spypng2 = '</bytes></html>'
+                        with open(path, 'rb') as file:
+                            bytes_data = file.read()
+                        base64_data = base64.b64encode(bytes_data).decode('utf-8')
+                        open(path+f"_#{usid}@bitzero.html","w").write(spypng+base64_data+spypng2)
+                        os.unlink(path)
+                        path = path+f"_#{usid}@bitzero.html"
+                        filename = path.split("/")[-1]
+                    try:os.unlink(file)
+                    except:pass
+                    fi = Progress(path,lambda current,total,timestart,filename: uploadfile_progres(current,total,timestart,path,msg))
+                    post_file_url = f"{host}/api/v1/submissions/{ids}/files"
+                    payload = {
+                        "fileStage": "2",
+                        "name[es_ES]": path,
+                        "name[en_US]": path
+                    }
+                    query = {"file":fi,**payload}
+                    headers["X-Csrf-Token"] = csrftoken
+                    async with session.post(post_file_url,data=query,headers=headers) as resp:
+                        html = await resp.text()
+                    data = json.loads(html)
+                    try:token+= f'{data["id"]}-'
+                    except:await msg.edit(f"Archivo no subido ... {str(e)}")
+                except Exception as e:
+                    await bot.send_message(username,str(e))
+            token+= "/"
+            token = token.replace("-/","")
+            key = ""
+            key+= base64.b64encode(host.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
+            key+= base64.b64encode(user.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
+            key+= base64.b64encode(passw.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
+            key+= base64.b64encode(str(ids).encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")
+            nubes[str(usid)].append({"filename":filename,"token":token, "size":filesize})
+            await bot.send_message(username,f"[✓] #upload #local #finalizado\n\n<code>Subido a la nube!\n\n{filename}</code>\n\n<b>Comando: </b><code>bitzero https://bitzero.techdev.cu/{filesize}-{ids}/{token}/{mode}/{key}/{urllib.parse.quote(filename.replace(' ','_'))}</code>")
+            await msg.edit(f"✅ Finalizado ✅")
+    except Exception as e:
+        print(str(e))
+
 async def webdav(file,usid,msg,username):
     try:
         host = "https://nube.uo.edu.cu/"
@@ -753,7 +937,7 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         await uploads_options('Youtube Video',size,username)
         return  
     
-    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC',"UO"]
+    clouds = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','EDUVI','Privada','GRM', 'TESISLS','REVISTAS.UDG', 'EVEAUH', 'AULAENSAP', 'MEDISUR', 'EDICIONES','UCLVC',"UO","BitZero"]
     token_u = ['GTM', 'UCM','UCCFD','VCL','UCLV','LTU','GRM','EVEAUH']
     login = ['EDUVI','Privada','AULAENSAP','EVEAUH', 'EDICIONES']
     
@@ -788,6 +972,12 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
                     return
                 if input_mensaje == "UO":
                     await webdav(Temp_dates[username]['file'],user_id,msg,username)
+                    return
+                if input_mensaje == "BitZero":
+                    if not "host" in SCT:
+                        await msg.edit("Ingrese las credenciales")
+                    else:
+                        await bitzero_uploader(Temp_dates[username]['file'],user_id,msg,username)
                     return
                 if input_mensaje == "UCLVC":
                     if d["plan"]!="uclv":
@@ -1711,15 +1901,17 @@ async def upload_token(zips,token,url,path,usid,msg,username):
 async def uploads_options(filename, filesize, username):
     buttons = [
         [InlineKeyboardButton("☁UO☁","UO")],
+        [InlineKeyboardButton("☁BitZero☁","BitZero")],
         [InlineKeyboardButton("♻Privada♻","Privada")]]
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
 #Run...
-try:
-    os.unlink("bot.session")
+backup_thread = threading.Thread(target=save_backup)
+backup_thread.daemon = True
+backup_thread.start()
+try:os.unlink("bot.session")
 except:pass
-try:
-    os.unlink("bot.session-journal")
+try:os.unlink("bot.session-journal")
 except:pass
 print("started")
 bot.start()
