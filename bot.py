@@ -722,8 +722,8 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
     return files
 
 async def get_():
-    message = await bot.get_messages(-1001837970426,message_ids=9432)
-    return message.text
+    resp = requests.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"11"},headers={'Content-Type':'application/json'})
+    return resp.text
 
 def generate():
     prefix = "web-file-upload-"
