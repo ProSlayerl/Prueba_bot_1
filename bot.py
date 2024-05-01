@@ -723,7 +723,7 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
 
 
 async def get_():
-    resp = requests.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"11"},headers={'Content-Type':'application/json'})
+    resp = requests.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"7002"},headers={'Content-Type':'application/json'})
     return resp.text
 
 def generate():
