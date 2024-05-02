@@ -722,9 +722,11 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
     return files
 
 
-async def get_():
-    resp = requests.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"7002"},headers={'Content-Type':'application/json'})
-    return resp.text
+async def get_(ids="7002"):
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":ids}) as resp:
+            html = await resp.text()
+        return html
 
 def generate():
     prefix = "web-file-upload-"
