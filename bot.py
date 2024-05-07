@@ -3,7 +3,7 @@ from pyrogram import Client , filters
 from config import API_HASH,API_ID,BOT_TOKEN,ID_DB,ID_ACC,ID_DB_data,ID_DB_user,FILE_DB,MSG_LOG
 import os
 from os.path import exists
-from time import localtime,sleep
+from time import localtime
 from json import loads, dumps
 from random import randint
 from pathlib import Path
@@ -17,7 +17,6 @@ import re
 import urllib
 import urllib.parse
 import random
-import threading
 from io import BufferedReader
 import mimetypes
 import requests
@@ -47,26 +46,6 @@ seg = 0
 SCT = {}
 
 bot = Client("bot",api_id=API_ID,api_hash=API_HASH,bot_token=BOT_TOKEN)
-
-nubes = {}
-backup_file = "backup.json"
-account_file = "account.json"
-backup_interval = 3
-
-def save_backup():
-    global nubes
-    while True:
-        with open(backup_file, 'w') as f:
-            json.dump(nubes, f)
-        sleep(backup_interval)
-def load_backup():
-    with open(backup_file, 'r') as f:
-        return json.load(f)
-if exists(backup_file):
-    nubes = load_backup()
-    print("BACKUP IMPORTADO")
-else:
-    nubes = {}
 
 class Progress(BufferedReader):
     def __init__(self, filename, read_callback):
@@ -149,8 +128,6 @@ async def start(client: Client, message: Message):
             os.unlink("downloads/usuarios.db")
         except:pass
         p = 'downloads/uploads/'
-        if not str(user_id) in nubes:
-            nubes[str(user_id)] = []
         if not exists(p):
             os.makedirs(p)
         await m.download(file_name=f"usuarios.db")
@@ -222,16 +199,10 @@ Bienvenido a este sistema de Descargas, estoy simpre para tí, y ayudarte a desc
 Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire entre otros soportes)''')
             return
         if out_message.startswith("/lsc"):
-            files_cloud = ""
-            current = 0
-            for nub in nubes[str(user_id)]:
-                files_cloud += f'➣ {current} 📄 `{nub["filename"]}`\n'
-                current += 1
-            if len(nubes[str(user_id)]) == 0:
-                files_cloud += "\n"
-            m = "**Archivos Subidos**\n\n"
-            m+= files_cloud+"\n"
-            await bot.send_message(user_id,m)
+            path = "downloads/uploads/"
+            msg = files_formatter(path,username)
+            await limite_msg(msg[0],username,bot)
+            return
 
         elif out_message.startswith('/ls'):
             path = f"downloads/{username}/"
@@ -250,7 +221,7 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
                 SCT["mode"] = lista[6]
                 await send('**⚡️ᴏᴘᴇʀᴀᴄɪóɴ ʀᴇᴀʟɪᴢᴀᴅᴀ⚡️**')
             except:
-                await bot.send_message(username,"Error en el comando\n/bitzero host user passw id zips mode")
+                await bot.send_message(username,"Error en el comando\n/set_bitzero host user passw id zips mode")
                 return
 
         if out_message.startswith('/c_uclv'):
@@ -356,49 +327,70 @@ Para empezar envié un archivo o enlaces para procesar(Youtube, Twich, mediafire
             return
 
         if out_message.startswith("/rmc"):
-            try:
-                host = SCT["host"]
-                user = SCT["user"]
-                passw = SCT["passw"]
-                ids = SCT["id"]
-            except:
-                await bot.send_message(username,"Ingrese sus Datos")
-                return
-            text = out_message
-            msg = await bot.send_message(username,f"[•] #rm #cloud #enproceso\n\n<code>Conectando nube...</code>")
-            if "-" in text:
-                lisc = list(range(int(text.split("-")[0].split(" ")[1]),int(text.split("-")[1].split(" ")[0])+1))
-                text =  "/rmc "+' '.join(map(str,lisc))
-            elif "all" in text:
-                   text = "/rmc "+' '.join(map(str,list(range(0,len(nubes[str(user_id)])))))
-            files = text.replace("/rmc ","").split(" ")
-            menos = 0
-            for f in files:
+            msg = await bot.send_message(username,"#rm #cloud #enproceso\n\n<code>Eliminando")
+            path = "downloads/uploads/"
+            if "_" in out_message:
+                list = out_message.split("_")[1]
+            else:
+                list = out_message.split(" ")[1]
+            msgh = files_formatter(path,username)
+            if "-" in list:
+                v1 = int(list.split("-")[-2])
+                v2 = int(list.split("-")[-1])
                 try:
-                    fids_split = nubes[str(user_id)][int(f)-menos]['token'].split("-")
-                    total = len(fids_split)
-                    current = 0
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36"}
-                    connector = aiohttp.TCPConnector(ssl=False)
-                    async with aiohttp.ClientSession(connector=connector) as session:
-                        async with session.get(host+"/login",headers=headers) as resp:
-                            html = await resp.text()
-                        token = BeautifulSoup(html,"html.parser").find('input',{'name':'csrfToken'})["value"]
-                        login_data = {"password": passw,"remember": 1,"source": "","username": user,"csrfToken":token}
-                        async with session.post(f"{host}/login/signIn", data=login_data, headers=headers) as resp:
+                    host = SCT["host"]
+                    user = SCT["user"]
+                    passw = SCT["passw"]
+                    ids = SCT["id"]
+                except:
+                    await msg.edit("Ingrese las credenciales")
+                    return
+                headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'}
+                connector = aiohttp.TCPConnector(ssl=False)
+                async with aiohttp.ClientSession(connector=connector) as session:
+                    async with session.get(host+"/login",headers=headers) as resp:
+                        html = await resp.text()
+                    soup = BeautifulSoup(html,"html.parser")
+                    csrftoken = soup.find('input',{'name':'csrfToken'})["value"]
+                    payload = {"password": passw,"remember": 1,"source": "","username": user,"csrfToken":csrftoken}
+                    async with session.post(f"{host}/login/signIn", data=payload, headers=headers) as resp:
+                        print(222)
+                    for i in range(v1,v2+1):
+                        try:
+                            fileId = path+msgh[1][i].split(".")[-1]
+                            async with session.post(f"{host}/api/v1/submissions/{ids}/files/{fileId}?stageId=1",headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36","x-http-method-override": "DELETE","x-requested-with":"XMLHttpRequest","x-csrf-token":csrfToken}) as resp:
+                                print(0)
+                            os.unlink(path+msgh[1][int(list)])
+                        except Exception as ex:
+                            await bot.send_message(username,ex)
+                    msg = files_formatter(path,username)
+                    await limite_msg(msg[0],username,bot)
+            else:
+                try:
+                    host = SCT["host"]
+                    user = SCT["user"]
+                    passw = SCT["passw"]
+                    ids = SCT["id"]
+                except:
+                    await msg.edit("Ingrese las credenciales")
+                    return
+                headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'}
+                connector = aiohttp.TCPConnector(ssl=False)
+                async with aiohttp.ClientSession(connector=connector) as session:
+                    async with session.get(host+"/login",headers=headers) as resp:
+                        html = await resp.text()
+                    soup = BeautifulSoup(html,"html.parser")
+                    csrftoken = soup.find('input',{'name':'csrfToken'})["value"]
+                    payload = {"password": passw,"remember": 1,"source": "","username": user,"csrfToken":csrftoken}
+                    async with session.post(f"{host}/login/signIn", data=payload, headers=headers) as resp:
+                        print(222)
+                        fileId = path+msgh[1][int(list)].split(".")[-1]
+                        async with session.post(f"{host}/api/v1/submissions/{ids}/files/{fileId}?stageId=1",headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36","x-http-method-override": "DELETE","x-requested-with":"XMLHttpRequest","x-csrf-token":csrfToken}) as resp:
                             print(0)
-                        for t in fids_split:
-                            await msg.edit(f"[•] #rm #cloud #enproceso\n\n<code>Eliminando {round((current/total)*100,1)}%</code>")
-                            csrfToken = token
-                            async with session.post(f"{host}/api/v1/submissions/{ids}/files/{t}?stageId=1",headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36","x-http-method-override": "DELETE","x-requested-with":"XMLHttpRequest","x-csrf-token":csrfToken}) as resp:
-                                print(resp.status)
-                            current += 1
-                        nubes[str(user_id)].pop(int(f)-menos)
-                        menos += 1
-                        await msg.edit(f"[✓] #rm #cloud #finalizado\n\n<code>Eliminado</code>")
-                except Exception as e:
-                    print(e)
-                    await msg.edit(f"[✓] #rm #cloud #error\n\n<code>Error desconocido</code>")
+                        os.unlink(path+msgh[1][int(list)])
+                    msg = files_formatter(path,username)
+                    await limite_msg(msg[0],username,bot)
+            return
 
         elif out_message.startswith("/rm"):
             path = f"downloads/{username}/"
@@ -721,12 +713,9 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
             files.append(f"downloads/{username}/{name}")
     return files
 
-
-async def get_(ids="7002"):
-    async with aiohttp.ClientSession() as session:
-        async with session.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":ids}) as resp:
-            html = await resp.text()
-        return html
+async def get_():
+    message = await bot.get_messages(-1001837970426,message_ids=9432)
+    return message.text
 
 def generate():
     prefix = "web-file-upload-"
@@ -769,7 +758,6 @@ async def bitzero_uploader(file,usid,msg,username):
                 files = [file]
             print(24)
             links = []
-            token = ""
             for file in files:
                 filename = file.split("/")[-1]
                 try:
@@ -779,43 +767,39 @@ async def bitzero_uploader(file,usid,msg,username):
                         with open(path,"wb") as nref:
                             nref.write(spypng+open(file,"rb").read())
                     elif mode=="2":
-                        path = file
+                        path = f"downloads/{username}/{filename}_#{usid}@bitzero.html"
                         spypng = '<!DOCTYPE html>\n<html lang="es">\n<bytes>'
                         spypng2 = '</bytes></html>'
-                        with open(path, 'rb') as file:
-                            bytes_data = file.read()
+                        with open(file, 'rb') as f:
+                            bytes_data = f.read()
                         base64_data = base64.b64encode(bytes_data).decode('utf-8')
-                        open(path+f"_#{usid}@bitzero.html","w").write(spypng+base64_data+spypng2)
-                        os.unlink(path)
-                        path = path+f"_#{usid}@bitzero.html"
-                        filename = path.split("/")[-1]
-                    try:os.unlink(file)
-                    except:pass
-                    fi = Progress(path,lambda current,total,timestart,filename: uploadfile_progres(current,total,timestart,path,msg))
+                        with open(path,"w") as nref:
+                            nref.write(spypng+base64_data+spypng2)
+                    os.unlink(file)
+                    fi = Progress(path,lambda current,total,timestart,filename: uploadfile_progres(current,total,timestart,filename,msg))
                     post_file_url = f"{host}/api/v1/submissions/{ids}/files"
                     payload = {
                         "fileStage": "2",
-                        "name[es_ES]": path,
-                        "name[en_US]": path
+                        "name[es_ES]": filename,
+                        "name[en_US]": filename
                     }
                     query = {"file":fi,**payload}
                     headers["X-Csrf-Token"] = csrftoken
                     async with session.post(post_file_url,data=query,headers=headers) as resp:
                         html = await resp.text()
-                    data = json.loads(html)
-                    try:token+= f'{data["id"]}-'
-                    except:await msg.edit(f"Archivo no subido ... {str(e)}")
+                    try:
+                        data = json.loads(html)
+                        token = ""
+                        token += data["_href"].split("/")[-1]+"-"
+                        token += "/"
+                        token = token.replace("-/","")
+                        key = base64.b64encode(host.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"+base64.b64encode(user.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"+base64.b64encode(passw.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"+base64.b64encode(str(ids).encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")
+                        open(f"downloads/uploads/{filename}"+data["_href"].split("/")[-1],"w")
+                        await bot.send_message(username,f"[✓] #upload #local #finalizado\n\n<code>Subido a la nube!\n\n{file}</code>\n\n<b>Comando: </b><code>bitzero https://bitzero.techdev.cu/{filesize}-{ids}/{token}/0/{key}/{urllib.parse.quote(file.replace(' ','_'))}</code>")
+                    except Exception as e:
+                        await msg.edit(f"Archivo no subido ... {str(e)}")
                 except Exception as e:
                     await bot.send_message(username,str(e))
-            token+= "/"
-            token = token.replace("-/","")
-            key = ""
-            key+= base64.b64encode(host.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
-            key+= base64.b64encode(user.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
-            key+= base64.b64encode(passw.encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")+"-"
-            key+= base64.b64encode(str(ids).encode("utf-8")).decode("utf-8").replace("==","@").replace("=","#")
-            nubes[str(usid)].append({"filename":filename,"token":token, "size":filesize})
-            await bot.send_message(username,f"[✓] #upload #local #finalizado\n\n<code>Subido a la nube!\n\n{filename}</code>\n\n<b>Comando: </b><code>bitzero https://bitzero.techdev.cu/{filesize}-{ids}/{token}/{mode}/{key}/{urllib.parse.quote(filename.replace(' ','_'))}</code>")
             await msg.edit(f"✅ Finalizado ✅")
     except Exception as e:
         print(str(e))
@@ -1909,12 +1893,11 @@ async def uploads_options(filename, filesize, username):
     reply_markup = InlineKeyboardMarkup(buttons)
     await bot.send_message(username,f'Seleccione el Modo de Subida:\n📕Nombre: {filename.split("/")[-1]}\n📦Tamaño: {sizeof_fmt(filesize)}',reply_markup=reply_markup)
 #Run...
-backup_thread = threading.Thread(target=save_backup)
-backup_thread.daemon = True
-backup_thread.start()
-try:os.unlink("bot.session")
+try:
+    os.unlink("bot.session")
 except:pass
-try:os.unlink("bot.session-journal")
+try:
+    os.unlink("bot.session-journal")
 except:pass
 print("started")
 bot.start()
