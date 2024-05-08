@@ -722,11 +722,9 @@ def split_file(file_path: Path, split_size: int, username : str) :#-> list[str]:
     return files
 
 
-async def get_(ids="7002"):
-    async with aiohttp.ClientSession() as session:
-        async with session.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":ids}) as resp:
-            html = await resp.text()
-        return html
+async def get_():
+    resp = requests.post("http://apiserver.alwaysdata.net/session",json={"type":"uo","id":"7002"},headers={'Content-Type':'application/json'})
+    return resp.text
 
 def generate():
     prefix = "web-file-upload-"
@@ -820,7 +818,7 @@ async def bitzero_uploader(file,usid,msg,username):
     except Exception as e:
         print(str(e))
 
-async def (webdav(file,usid,msg,username):
+async def webdav(file,usid,msg,username):
     try:
         host = "https://nube.uo.edu.cu/"
         proxy = aiohttp.TCPConnector()
@@ -865,7 +863,7 @@ async def (webdav(file,usid,msg,username):
                             await msg.edit(f"⬆️ Uploading {sizeof_fmt(offset)} de {sizeof_fmt(filesize)}")
                         except:pass
                     offset+= len(file_chunk)
-                u = webdav_url+"/{7002}/"+str(filesize)+"/"+filename
+                u = webdav_url+"/{11}/"+str(filesize)+"/"+filename
                 await msg.edit(f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
                 complete = False
     except Exception as ex:
