@@ -863,7 +863,7 @@ async def webdav(file,usid,msg,username):
                             await msg.edit(f"⬆️ Uploading {sizeof_fmt(offset)} de {sizeof_fmt(filesize)}")
                         except:pass
                     offset+= len(file_chunk)
-                u = webdav_url+"/{7008}/"+str(filesize)+"/"+filename
+                u = webdav_url+"/{7002}/"+str(filesize)+"/"+filename
                 await msg.edit(f"📂  [{filename}]({u})\n❄️ **Tamaño:** {sizeof_fmt(filesize)}")
                 complete = False
     except Exception as ex:
